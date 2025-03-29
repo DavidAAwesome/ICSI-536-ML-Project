@@ -2,12 +2,12 @@
 
 ## Run Tests
 
-Tests are intended to be run with the [pytest](https://docs.pytest.org/en/stable/index.html) framework. Ensure that the package is properly installed in your virtual environment (it's in the `requirements.txt`).
+Tests are intended to be run with the [pytest](https://docs.pytest.org/en/stable/index.html) framework. Ensure that the package is properly installed in your virtual environment, **and that it is activated**.
 
 Then run:
 
-```py
+```
 pytest tests
 ```
 
-from the root directory
+from the project root.
