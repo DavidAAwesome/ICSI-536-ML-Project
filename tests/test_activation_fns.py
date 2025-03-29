@@ -1,5 +1,5 @@
 import numpy as np
-from activation_fns import Softmax
+from nottensorflow.activation_fns import Softmax
 from scipy.optimize import check_grad
 
 ## Softmax Class Tests
