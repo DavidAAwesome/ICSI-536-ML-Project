@@ -17,7 +17,7 @@ class Softmax(ActivationFunc):
         """
         z: n-dimensional vector
 
-        Turns the elements of `z` into 'probabilities' by scaling `z` by 1/sum(`z` elements)
+        Turns the elements of `z` into 'probabilities' by scaling `z` by 1/sum(`z`'s elements)
         """
         ez = np.exp(z) 
         return ez / np.sum(ez)
@@ -29,7 +29,7 @@ class Softmax(ActivationFunc):
         
         Applies the Jacobian of the softmax function to the vector `z`.
         """
-        assert z.ndim == 1
+        z = z.reshape(-1)
         return np.array([
             [-z[i] * z[j] if i != j else z[i]*(1-z[j]) 
              for i in range(z.size)] 
