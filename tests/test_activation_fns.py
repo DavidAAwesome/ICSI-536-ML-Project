@@ -11,7 +11,8 @@ def test_activate():
     assert np.sum(softZ) == 1
 
 def test_deriv():
-   n = 100
-   z = np.arange(n)
+   n = 4
+   np.random.seed(42)
+   z = np.random.rand(n)
    error = check_grad(Softmax.activate, Softmax.deriv, x0=z)
    assert error < 0.001

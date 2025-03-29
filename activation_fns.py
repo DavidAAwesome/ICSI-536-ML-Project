@@ -15,7 +15,7 @@ class Softmax(ActivationFunc):
     @classmethod
     def activate(cls, z: np.ndarray) -> np.ndarray:
         """
-        z: n-dimensional vector
+        z:  n-dimensional vector
 
         Turns the elements of `z` into 'probabilities' by scaling `z` by 1/sum(`z`'s elements)
         """
@@ -25,13 +25,10 @@ class Softmax(ActivationFunc):
     @classmethod
     def deriv(cls, z: np.ndarray) -> np.ndarray:
         """
-        z: n-dimensional vector
+        z:  n-dimensional vector
         
         Applies the Jacobian of the softmax function to the vector `z`.
         """
-        z = z.reshape(-1)
-        return np.array([
-            [-z[i] * z[j] if i != j else z[i]*(1-z[j]) 
-             for i in range(z.size)] 
-            for j in range(z.size)
-        ])
+        z = Softmax.activate(z)
+        z = z.reshape((1,-1))
+        return np.diagflat(z) - z.T @ z
