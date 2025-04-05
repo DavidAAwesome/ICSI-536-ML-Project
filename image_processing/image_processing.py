@@ -73,8 +73,8 @@ def augment_and_save(image, output_dir, base_name, num_augmented=5):
 
 if __name__ == "__main__":
     # input and output directories
-    input_folder = "input_images"
-    output_folder = "augmented_images"
+    input_folder = "./data/input"
+    output_folder = "./data/output"
 
     # Create output folder if dne
     os.makedirs(output_folder, exist_ok=True)
