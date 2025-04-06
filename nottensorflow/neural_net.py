@@ -1,8 +1,9 @@
 import numpy as np
+from abc import abstractmethod, ABC
 
 
 
-class Layer:
+class Layer(ABC):
     def forward(self, input):
         raise NotImplementedError
 
@@ -40,7 +41,8 @@ class ReLU(Layer):
         return output_grad * (self.input > 0)
 
 
-class MSELoss:
+
+class MeanSquareLoss:
     def forward(self, prediction, target):
         self.prediction = prediction
         self.target = target
@@ -69,7 +71,11 @@ class Model:
             loss_grad = layer.backward(loss_grad, learning_rate)
 
     def predict(self, x):
-        return self.forward(x)
+        """
+        Returns a column vector of natural numbers, representing class IDs.
+        """
+        probs = self.forward(x)
+        return np.argmax(probs, axis=1)
 
     def train(self, x, y, epochs, learning_rate, loss_fn):
         for epoch in range(epochs):

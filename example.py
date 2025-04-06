@@ -1,6 +1,6 @@
 import time
 from nottensorflow.image_processing import process_image
-from nottensorflow.neural_net import Model, Dense, ReLU, MSELoss
+from nottensorflow.neural_net import Model, Dense, ReLU, MeanSquareLoss
 import os
 import numpy as np
 
@@ -18,11 +18,12 @@ def extract_class_label_from_file(file_path: str):
     if not nums:
         return None
     class_id = int(nums[0])
+    return class_id
 
-    # Onehot encode class id
-    onehot_label = np.zeros(num_classes)
-    onehot_label[class_id] = 1
-    return onehot_label
+def onehot_encode(y: int, num_classes: int):
+    onehot_y = np.zeros(num_classes)
+    onehot_y[y] = 1
+    return onehot_y
 
 ## Load images & labels as numpy arrays
 base_dir = os.path.dirname(__file__)
@@ -38,9 +39,10 @@ for label_entry in os.scandir(labels_dir):
     if len(y_rows) >= limit:
         break
     # Accumate labels in list, to be converted to numpy array later
-    onehot_y = extract_class_label_from_file(label_entry.path)
-    if onehot_y is None: # Drop non-fractured images
+    y = extract_class_label_from_file(label_entry.path)
+    if y is None: # Drop non-fractured images
         continue
+    onehot_y = onehot_encode(y, num_classes)
     y_rows.append(onehot_y)
 
     # Do same for images
@@ -60,11 +62,15 @@ my_model = (Model()
             .add(ReLU())
             .add(Dense(16, num_classes)))
 
-my_model.train(x=X_train, y=y_train, epochs=200, learning_rate=0.1, loss_fn=MSELoss())
+my_model.train(x=X_train, y=y_train, epochs=200, learning_rate=0.1, loss_fn=MeanSquareLoss())
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Training Time: {elapsed_time}")
+
+
+# TODO: Cross validation
+
 ## Test model
 
 ### Get random image
