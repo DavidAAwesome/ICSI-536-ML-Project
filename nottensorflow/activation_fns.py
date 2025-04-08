@@ -3,38 +3,39 @@ from neural_net import Layer
 
 class Softmax(Layer):
   
-    def activate(self, z: np.ndarray) -> np.ndarray:
+    def forward(self, input):
         """
         Turns the elements of `z` into 'probabilities' by scaling `z` by 1/sum(`z`'s elements)
         """
-        ez = np.exp(z) 
+        ez = np.exp(input) 
         return ez / np.sum(ez)
     
-    def deriv(self, z: np.ndarray) -> np.ndarray:
+    def backward(self, output_grad, learning_rate) -> np.ndarray:
         """
         Applies the Jacobian of the softmax function to the vector `z`.
         """
-        z = self.activate(z)
+        z = self.forward(z)
         z = z.reshape((1,-1))
         return np.diagflat(z) - z.T @ z
 
 class ReLU(Layer):
     
-    def activate(self, z):
+    def forward(self, input):
         """  
         ReLU(`z`) = max{0, `z`}. Gets rid of all negative entries of `z`
         """
-        return np.maximum(0, z)
+        self.input = input
+        return np.maximum(0, input)
     
-    def deriv(self, z):
+    def backward(self, output_grad, learning_rate):
         """
         Returns 0 if entry of `z` is negative, else 1.
         """
-        return (z >= 0).astype(float)
+        return (self.input >= 0).astype(float)
     
 class Sigmoid(Layer):
     
-    def activate(self, z):
+    def forward(self, z):
         """
         Turns the elements of `z` into probabilities by plugging them into logistic function.
         """

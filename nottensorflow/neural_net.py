@@ -1,13 +1,14 @@
 import numpy as np
 from abc import abstractmethod, ABC
-
+from activation_fns import ReLU, Softmax, Sigmoid
+import random
 
 
 class Layer(ABC):
     def forward(self, input):
         raise NotImplementedError
 
-    def backward(self, output_grad, learning_rate):
+    def backward(self, output_grad, learning_rate, SGD):
         raise NotImplementedError
 
 
@@ -21,15 +22,22 @@ class Dense(Layer):
         self.input = input
         return np.dot(input, self.weights) + self.biases
 
-    def backward(self, output_grad, learning_rate):
-        weights_grad = np.dot(self.input.T, output_grad)
+    def backward(self, output_grad, learning_rate, SGD):
+        if SGD:
+            i = np.random.choice(self.input.shape[0], 1)
+            input = self.input[i]
+        else: 
+            input = self.input
+        weights_grad = np.dot(input.T, output_grad)
         input_grad = np.dot(output_grad, self.weights.T)
 
         self.weights -= learning_rate * weights_grad
         self.biases -= learning_rate * np.mean(output_grad, axis=0, keepdims=True)
 
         return input_grad
-
+    
+    
+    
 
 
 class ReLU(Layer):
@@ -37,8 +45,14 @@ class ReLU(Layer):
         self.input = input
         return np.maximum(0, input)
 
-    def backward(self, output_grad, learning_rate):
-        return output_grad * (self.input > 0)
+    def backward(self, output_grad, learning_rate, SGD):
+        if SGD:
+            i = np.random.choice(self.input.shape[0], 1)
+            input = self.input[i]
+        else: 
+            input = self.input
+        
+        return output_grad * (input > 0)
 
 
 
@@ -48,14 +62,23 @@ class MeanSquareLoss:
         self.target = target
         return np.mean((prediction - target) ** 2)
 
-    def backward(self):
-        return 2 * (self.prediction - self.target) / self.target.size
+    def backward(self, SGD):
+        
+        if SGD:
+            i = np.random.choice(self.input.shape[0], 1)
+            prediction = self.prediction[i]
+            target = self.target[i]
+        else:
+            prediction = self.prediction
+            target = self.target
+        return 2 * (prediction - target) / target.size
 
 
 
 class Model:
-    def __init__(self):
+    def __init__(self,SGD):
         self.layers = []
+        self.SGD = SGD
 
     def add(self, layer: Layer):
         self.layers.append(layer)
@@ -68,7 +91,7 @@ class Model:
 
     def backward(self, loss_grad, learning_rate):
         for layer in reversed(self.layers):
-            loss_grad = layer.backward(loss_grad, learning_rate)
+            loss_grad = layer.backward(loss_grad, learning_rate, self.SGD)
 
     def predict(self, x):
         """
@@ -86,8 +109,18 @@ class Model:
             loss = loss_fn.forward(output, y)
 
             # Backward pass
-            grad = loss_fn.backward()
+            grad = loss_fn.backward(self.SGD)
             self.backward(grad, learning_rate)
 
             if (epoch + 1) % 100 == 0 or epoch == 0:
                 print(f"Epoch {epoch + 1}, Loss: {loss:.6f}")
+        
+        weights = []
+        biases = []
+        for layer in self.layers:
+            weights.append(layer.weights)
+            biases.append(layer.biases)
+        return weights, biases
+
+    
+    

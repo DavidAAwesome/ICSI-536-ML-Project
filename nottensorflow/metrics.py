@@ -6,10 +6,6 @@ class ConfusionMatrix:
         """
         Expects the labels to already be encoded as class ID's
         """
-        self.true_labels = true_labels
-        self.pred_labels = pred_labels
-        self.num_classes = num_classes
-
         assert np.max(true_labels) <= num_classes
         assert np.max(pred_labels) <= num_classes
 
