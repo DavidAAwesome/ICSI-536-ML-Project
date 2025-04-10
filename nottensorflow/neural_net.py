@@ -1,6 +1,5 @@
 import numpy as np
-from abc import abstractmethod, ABC
-from activation_fns import ReLU, Softmax, Sigmoid
+from abc import ABC
 import random
 
 
@@ -16,7 +15,7 @@ class Layer(ABC):
 class Dense(Layer):
     def __init__(self, input_size, output_size):
         self.weights = np.random.randn(input_size, output_size) * 0.01
-        self.biases = np.zeros((1, output_size))
+        self.biases = np.zeros((1, output_size), dtype=float)
 
     def forward(self, input):
         self.input = input
@@ -24,7 +23,7 @@ class Dense(Layer):
 
     def backward(self, output_grad, learning_rate, SGD):
         if SGD:
-            i = np.random.choice(self.input.shape[0], 1)
+            i = random.randint(1, self.input.shape[0])
             input = self.input[i]
         else: 
             input = self.input
@@ -37,23 +36,6 @@ class Dense(Layer):
         return input_grad
     
     
-    
-
-
-class ReLU(Layer):
-    def forward(self, input):
-        self.input = input
-        return np.maximum(0, input)
-
-    def backward(self, output_grad, learning_rate, SGD):
-        if SGD:
-            i = np.random.choice(self.input.shape[0], 1)
-            input = self.input[i]
-        else: 
-            input = self.input
-        
-        return output_grad * (input > 0)
-
 
 
 class MeanSquareLoss:
@@ -63,9 +45,8 @@ class MeanSquareLoss:
         return np.mean((prediction - target) ** 2)
 
     def backward(self, SGD):
-        
         if SGD:
-            i = np.random.choice(self.input.shape[0], 1)
+            i = random.randint(1, self.prediction.shape[0])
             prediction = self.prediction[i]
             target = self.target[i]
         else:
@@ -76,8 +57,8 @@ class MeanSquareLoss:
 
 
 class Model:
-    def __init__(self,SGD):
-        self.layers = []
+    def __init__(self, SGD: bool, layers: list[Layer] | None = None):
+        self.layers = [] if layers is None else layers
         self.SGD = SGD
 
     def add(self, layer: Layer):
@@ -118,6 +99,8 @@ class Model:
         weights = []
         biases = []
         for layer in self.layers:
+            if layer is not Dense:
+                continue
             weights.append(layer.weights)
             biases.append(layer.biases)
         return weights, biases

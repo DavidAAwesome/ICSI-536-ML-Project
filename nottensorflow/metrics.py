@@ -1,11 +1,13 @@
 # import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 class ConfusionMatrix:
-    def __init__(self, true_labels, pred_labels, num_classes):
+    def __init__(self, true_labels, pred_labels, num_classes: int):
         """
-        Expects the labels to already be encoded as class ID's
+        Expects `true_label` and `pred_label` to already be enoded as class ID's, starting from 0.
         """
+        self.num_classes = num_classes
         assert np.max(true_labels) <= num_classes
         assert np.max(pred_labels) <= num_classes
 
@@ -14,22 +16,42 @@ class ConfusionMatrix:
             self.matrix[i, j] += 1
 
     def display(self):
-        # TODO: Return a matplotlib figure of `self.matrix`
-        pass
+        """
+        Returns a matplotlib `Table` representing the confusion matrix. 
+        Column labels are the integer encodings of the table. 
+        
+        If you want the labels to be something different, you will have to manually 
+        edit them before calling `plt.show()`.
+        """
+        _, ax = plt.subplots()
+        ax.axis('off')  # turn off the axis
 
+        # Set rows & cols
+        classes = [str(c + 1) for c in range(self.num_classes)]
+        rows = cols = classes
+        # Set Data
+        table_data: list[list[str]] = self.matrix.astype(str).tolist()
+
+        # Instantiate table
+        table = ax.table(cellText=table_data, loc='center', cellLoc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(12)
+        table.scale(1.2, 1.2)
+        return table
+    
     def print_statistics(self):
-        # Accuracy
-        # Precision
-        # Recall
-        # F1 Score
-        pass
+        print(f'Accuracy: {self.accuracy():.4f}')
+        for cls in range(self.num_classes):
+            print(f'Precision {cls}: {self.precision(cls):.4f}')
+            print(f'Recall {cls}: {self.precision(cls):.4f}')
+            print(f'F1 Score {cls}: {self.precision(cls):.4f}')
 
     def accuracy(self):
         correct = np.trace(self.matrix)
         total = np.sum(self.matrix)
         return correct / total
     
-    def precision(self, C):
+    def precision(self, C: int):
         """
         Precision = TP / (TP + FP) = True_Positive / All_Positive_Predictions
 

@@ -7,7 +7,7 @@ np.random.seed(42) # Hardcode seed for reproducible results
 def test_softmax_activate():
     n = 100
     z = np.random.rand(n)
-    softZ = Softmax.forward(z)
+    forward(z)
     assert (softZ > 0).all()
     assert np.absolute(np.sum(softZ) - 1) < 0.001
 

@@ -1,80 +1,48 @@
 import time
 from nottensorflow.image_processing import process_image
-from nottensorflow.neural_net import Model, Dense, ReLU, MeanSquareLoss
+from nottensorflow.neural_net import Model, Dense, MeanSquareLoss
+from nottensorflow.activation_fns import ReLU, Softmax, Sigmoid
 import os
 import numpy as np
+from nottensorflow.cross_validation import cross_validation
 
-num_classes = 7
+NUM_CLASSES = 7
 
-## Helper functions
-def extract_class_label_from_file(file_path: str):
-    """
-    Extracts class ID (first number) from YOLO dataset label. Returns as
-    numpy array.
-    """
-    with open(file_path, 'r') as file:
-        content = file.read()
-    nums = content.split()
-    if not nums:
-        return None
-    class_id = int(nums[0])
-    return class_id
-
-def onehot_encode(y: int, num_classes: int):
-    onehot_y = np.zeros(num_classes)
-    onehot_y[y] = 1
-    return onehot_y
-
-## Load images & labels as numpy arrays
+## Read in data from CSV
 base_dir = os.path.dirname(__file__)
 bone_yolo_dir = os.path.join(base_dir, 'data', 'BoneFractureYolo8')
-images_dir = os.path.join(bone_yolo_dir, 'train', 'images')
-labels_dir = os.path.join(bone_yolo_dir, 'train', 'labels')
+train_path = os.path.join(bone_yolo_dir, 'train_extracted.csv')
+train_data = np.loadtxt(train_path, dtype=float, delimiter=',')
 
-limit = 1000 # Only scan in `limit` number of images
-X_rows = [] 
-y_rows = []
-for label_entry in os.scandir(labels_dir):
+X_train = train_data[:-1]
+y_train = train_data[-1]
 
-    if len(y_rows) >= limit:
-        break
-    # Accumate labels in list, to be converted to numpy array later
-    y = extract_class_label_from_file(label_entry.path)
-    if y is None: # Drop non-fractured images
-        continue
-    onehot_y = onehot_encode(y, num_classes)
-    y_rows.append(onehot_y)
-
-    # Do same for images
-    image_name = label_entry.name.replace('.txt', '.jpg')
-    image_path = os.path.join(images_dir, image_name)
-    X_rows.append(process_image(image_path))
-
-X_train = np.array(X_rows)
-y_train = np.array(y_rows)
 
 ## Init and Train model
 start_time = time.time()
 
 img_size = 224 * 224
-my_model = (Model()
+my_model = (Model(SGD=True)
             .add(Dense(img_size, 16))
             .add(ReLU())
-            .add(Dense(16, num_classes)))
+            .add(Dense(16, NUM_CLASSES))
+            .add(Softmax()))
+# my_model.train(x=X_train, y=y_train, epochs=200, learning_rate=0.1, loss_fn=MeanSquareLoss())
 
-my_model.train(x=X_train, y=y_train, epochs=200, learning_rate=0.1, loss_fn=MeanSquareLoss())
+models = cross_validation(my_model.layers, X_train, y_train, epochs=200, learning_rate=0.1, loss_fn=MeanSquareLoss(), passes=5)
+for i in range(len(models)):
+    pass
+
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Training Time: {elapsed_time}")
 
-
-# TODO: Cross validation
-
 ## Test model
 
 ### Get random image
 n = 43 # "Random"
+
 
 test_images_path = os.path.join(bone_yolo_dir, 'test', 'images')
 random_image_path = os.listdir(test_images_path)[n]
