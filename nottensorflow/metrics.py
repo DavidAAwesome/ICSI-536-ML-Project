@@ -15,7 +15,7 @@ class ConfusionMatrix:
         for i, j in zip(pred_labels, true_labels):
             self.matrix[i, j] += 1
 
-    def display(self):
+    def display(self, row_labels=None, col_labels=None,):
         """
         Returns a matplotlib `Table` representing the confusion matrix. 
         Column labels are the integer encodings of the table. 
@@ -26,14 +26,15 @@ class ConfusionMatrix:
         _, ax = plt.subplots()
         ax.axis('off')  # turn off the axis
 
-        # Set rows & cols
-        classes = [str(c + 1) for c in range(self.num_classes)]
-        rows = cols = classes
         # Set Data
         table_data: list[list[str]] = self.matrix.astype(str).tolist()
 
         # Instantiate table
-        table = ax.table(cellText=table_data, loc='center', cellLoc='center')
+        table = ax.table(cellText=table_data, 
+                         rowLabels=row_labels, 
+                         colLabels=col_labels, 
+                         loc='center', 
+                         cellLoc='center')
         table.auto_set_font_size(False)
         table.set_fontsize(12)
         table.scale(1.2, 1.2)
