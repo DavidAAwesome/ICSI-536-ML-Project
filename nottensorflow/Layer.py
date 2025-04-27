@@ -6,11 +6,6 @@ class Layer:
     def backward(self, output_grad, learning_rate):
         raise NotImplementedError
 
-
-
-
-
-
 # Fully connected layer
 class Dense(Layer):
     def __init__(self, input_size, output_size):
@@ -29,6 +24,3 @@ class Dense(Layer):
         self.biases -= learning_rate * np.mean(output_grad, axis=0, keepdims=True)
 
         return input_grad
-
-
-

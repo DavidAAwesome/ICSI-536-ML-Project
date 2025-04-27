@@ -1,8 +1,6 @@
 import random
 import numpy as np
-from neural_net import Layer
-
-
+from nottensorflow.neural_net import Layer
 
 class Softmax(Layer):
   
@@ -12,19 +10,15 @@ class Softmax(Layer):
         """
         self.input = input
         # Improve numerical stability
-        input -= input.max()
-        log_softmax =  input - np.log(input) 
-        return np.exp(log_softmax)
+        exp_input = np.exp(input - np.max(input, axis=1, keepdims=True))
+        self.output = exp_input / np.sum(exp_input, axis=1, keepdims=True)
+        return self.output
     
     def backward(self, output_grad: np.ndarray, learning_rate: float) -> np.ndarray:
         """
-        Applies the Jacobian of the softmax function to the vector `output_grad`.
+        Simplified gradient for softmax when used with cross-entropy loss
         """
-        z = self.forward(self.input).reshape((1,-1)) # 1 x In
-        J_z = np.diagflat(z) - np.dot(z.T, z) # In x In
-        return np.dot(J_z, output_grad.T) # In x Out 
-
-
+        return output_grad
 
 class ReLU(Layer):
     def forward(self, input):
@@ -34,19 +28,11 @@ class ReLU(Layer):
         self.input = input
         return np.maximum(0, input)
 
-    def backward(self, output_grad, learning_rate, SGD):
+    def backward(self, output_grad, learning_rate):
         """
         Returns 0 if entry of `output_grad` is negative, else 1.
         """
-        if SGD:
-            i = random.randint(1, self.input.shape[0])
-            input = self.input[i]
-        else: 
-            input = self.input
-        
-        return output_grad * (input > 0)
-
-
+        return output_grad * (self.input > 0)
  
 class Sigmoid(Layer):
     
@@ -57,8 +43,10 @@ class Sigmoid(Layer):
         self.input = input
         return 1 / (1 + np.exp(-input))
     
-    def deriv(self, z):
+    def backward(self, output_grad, learning_rate):
         """
         First derivative of the sigmoid/logistic function
         """
-        return np.exp(-z) / ((1 + np.exp(-z))**2)
+        sig = self.forward(self.input)
+        return output_grad * sig * (1 - sig)
+    
