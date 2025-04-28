@@ -7,8 +7,8 @@ import neural_network
 
 # Model class
 class Model:
-    def __init__(self):
-        self.layers = []
+    def __init__(self, layers=[]):
+        self.layers = layers
 
     def add(self, layer):
         self.layers.append(layer)
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
 
 
-    loss_fn = loss_functions.MSELoss()
+    loss_fn = loss_functions.MeanSquaredLoss()
 
     model.train(X, y, epochs=10000, learning_rate=0.1, loss_fn=loss_fn)
 

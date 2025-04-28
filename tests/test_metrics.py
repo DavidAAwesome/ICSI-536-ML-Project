@@ -1,5 +1,5 @@
 from nottensorflow.metrics import ConfusionMatrix
-from nottensorflow.cross_validation import count_classes
+from nottensorflow.croxss_validation import count_classes
 import random
 import matplotlib.pyplot as plt
 

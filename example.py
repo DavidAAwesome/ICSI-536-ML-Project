@@ -1,10 +1,12 @@
 import time
 from nottensorflow.image_processing import process_image
-from nottensorflow.neural_net import Model, Dense, MeanSquareLoss
+from nottensorflow.neural_network import Model
+from nottensorflow.Layer import Dense
+from nottensorflow.loss_functions import MeanSquaredLoss
 from nottensorflow.activation_fns import ReLU, Softmax, Sigmoid
 import os
 import numpy as np
-from nottensorflow.cross_validation import cross_validation
+from nottensorflow.croxss_validation import cross_validation
 
 NUM_CLASSES = 7
 
@@ -22,14 +24,14 @@ y_train = train_data[-1]
 start_time = time.time()
 
 img_size = 224 * 224
-my_model = (Model(SGD=True)
+my_model = (Model()
             .add(Dense(img_size, 16))
             .add(ReLU())
             .add(Dense(16, NUM_CLASSES))
             .add(Softmax()))
 # my_model.train(x=X_train, y=y_train, epochs=200, learning_rate=0.1, loss_fn=MeanSquareLoss())
 
-models = cross_validation(my_model.layers, X_train, y_train, epochs=200, learning_rate=0.1, loss_fn=MeanSquareLoss(), passes=5)
+models = cross_validation(my_model.layers, X_train, y_train, epochs=200, learning_rate=0.1, loss_fn=MeanSquaredLoss(), passes=5)
 for i in range(len(models)):
     pass
 
