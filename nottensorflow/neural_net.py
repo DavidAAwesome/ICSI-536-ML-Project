@@ -7,9 +7,15 @@ from nottensorflow import activation_functions
 class Model:
     def __init__(self):
         self.layers = []
+        self.accuracy_history = []  # track accuracy over epochs
+        self.name = "Model"
 
     def add(self, layer):
         self.layers.append(layer)
+        return self
+
+    def set_name(self, name):
+        self.name = name
         return self
 
     def forward(self, x):
@@ -23,6 +29,12 @@ class Model:
 
     def predict(self, x):
         return self.forward(x)
+
+    def compute_accuracy(self, x, y):
+        predictions = self.predict(x)
+        pred_labels = np.argmax(predictions, axis=1)
+        true_labels = np.argmax(y, axis=1)
+        return np.mean(pred_labels == true_labels)
 
     def train_SGD(self, x, y, epochs, learning_rate, loss_fn, batch_size):
         num_samples = x.shape[0]
@@ -50,15 +62,17 @@ class Model:
                 grad = loss_fn.backward()
                 self.backward(grad, learning_rate)
 
-            # Print epoch loss on full dataset (optional)
+            # Compute and store accuracy for this epoch
+            epoch_accuracy = self.compute_accuracy(x, y)
+            self.accuracy_history.append(epoch_accuracy)
+
+            # Print epoch loss and accuracy
             if (epoch + 1) % 1 == 0:
                 full_output = self.forward(x)
                 full_loss = loss_fn.forward(full_output, y)
-                print(f"Epoch {epoch + 1}, Loss: {full_loss:.6f}")
+                print(f"Epoch {epoch + 1}, Loss: {full_loss:.6f}, Accuracy: {epoch_accuracy:.4f}")
 
     def train(self, x, y, epochs, learning_rate, loss_fn):
-
-
         for epoch in range(epochs):
             # Forward pass
             output = self.forward(x)

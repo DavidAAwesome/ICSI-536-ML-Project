@@ -1,4 +1,5 @@
 import time
+import matplotlib.pyplot as plt
 from nottensorflow.image_processing import process_image
 from nottensorflow.neural_net import Model
 from nottensorflow.Layer import Dense
@@ -7,6 +8,7 @@ from nottensorflow.loss_functions import MeanSquaredLoss, CrossEntropyLoss
 import os
 import numpy as np
 from nottensorflow.Cross_validation import cross_validation
+from collections import defaultdict
 
 NUM_CLASSES = 7
 
@@ -29,7 +31,7 @@ configurations = [
     {
         'name': 'Optimized Deeper Network',
         'learning_rate': 0.1,
-        'epochs': 200,
+        'epochs': 100,
         'batch_size': 32,
         'layers': [
             (Dense(img_size, 128), ReLU()),
@@ -37,64 +39,106 @@ configurations = [
             (Dense(64, 32), ReLU()),
             (Dense(32, NUM_CLASSES), Softmax())
         ],
-        'loss_fn': MeanSquaredLoss()
+        'loss_fn': CrossEntropyLoss()
     },
     {
         'name': 'Balanced Network',
         'learning_rate': 0.05,
-        'epochs': 200,
+        'epochs': 100,
         'batch_size': 32,
         'layers': [
             (Dense(img_size, 64), ReLU()),
             (Dense(64, 32), ReLU()),
             (Dense(32, NUM_CLASSES), Softmax())
         ],
-        'loss_fn': MeanSquaredLoss()
+        'loss_fn': CrossEntropyLoss()
     },
     {
         'name': 'Wide Network',
         'learning_rate': 0.1,
-        'epochs': 200,
+        'epochs': 100,
         'batch_size': 32,
         'layers': [
             (Dense(img_size, 256), ReLU()),
             (Dense(256, NUM_CLASSES), Softmax())
         ],
-        'loss_fn': MeanSquaredLoss()
+        'loss_fn': CrossEntropyLoss()
     },
     {
         'name': 'Optimized Batch Size',
         'learning_rate': 0.1,
-        'epochs': 200,
+        'epochs': 100,
         'batch_size': 48,
         'layers': [
             (Dense(img_size, 64), ReLU()),
             (Dense(64, 32), ReLU()),
             (Dense(32, NUM_CLASSES), Softmax())
         ],
-        'loss_fn': MeanSquaredLoss()
+        'loss_fn': CrossEntropyLoss()
     },
     {
         'name': 'Hybrid Architecture',
         'learning_rate': 0.1,
-        'epochs': 200,
+        'epochs': 100,
         'batch_size': 32,
         'layers': [
             (Dense(img_size, 128), ReLU()),
             (Dense(128, 64), ReLU()),
             (Dense(64, NUM_CLASSES), Softmax())
         ],
-        'loss_fn': MeanSquaredLoss()
+        'loss_fn': CrossEntropyLoss()
     }
 ]
 
+def plot_accuracy_per_configuration(trained_models, results):
+    config_to_models = defaultdict(list)
+    for model, result in zip(trained_models, results):
+        config_to_models[result['config']].append((model, result['fold']))
+
+    for config_name, models_folds in config_to_models.items():
+        plt.figure(figsize=(10, 5))
+        for model, fold in models_folds:
+            plt.plot(model.accuracy_history, label=f"Fold {fold+1}")
+        plt.xlabel('Epoch')
+        plt.ylabel('Training Accuracy')
+        plt.title(f"{config_name} - Training Accuracy over Epochs")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig(f"accuracy_{config_name.replace(' ', '_').lower()}.png")
+        plt.show()
+
+
+def plot_combined_accuracy(trained_models, results):
+    config_to_best_model = {}
+    config_to_best_acc = {}
+    for model, result in zip(trained_models, results):
+        config = result['config']
+        acc = result['valid_acc']
+        if config not in config_to_best_acc or acc > config_to_best_acc[config]:
+            config_to_best_acc[config] = acc
+            config_to_best_model[config] = model
+
+    plt.figure(figsize=(12, 6))
+    for config, model in config_to_best_model.items():
+        plt.plot(model.accuracy_history, label=config)
+    plt.xlabel('Epoch')
+    plt.ylabel('Training Accuracy')
+    plt.title('Comparison of Training Accuracies Across Configurations')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig('accuracy_comparison_all_configurations.png')
+    plt.show()
+
 results = []
+trained_models = []
 
 for config in configurations:
     print(f"\nTesting configuration: {config['name']}")
     start_time = time.time()
     
-    my_model = Model()
+    my_model = Model().set_name(config['name'])
     for layer, activation in config['layers']:
         my_model.add(layer)
         my_model.add(activation)
@@ -103,7 +147,7 @@ for config in configurations:
                             epochs=config['epochs'], 
                             learning_rate=config['learning_rate'], 
                             loss_fn=config['loss_fn'], 
-                            passes=2)
+                            passes=5)
     
     for i, (model, train_cm, valid_cm) in enumerate(models):
         results.append({
@@ -113,10 +157,14 @@ for config in configurations:
             'valid_acc': valid_cm.accuracy(),
             'time': time.time() - start_time
         })
+        trained_models.append(model)
         print(f"\nFold {i+1}:")
         print(f"Training accuracy: {train_cm.accuracy():.3f}")
         print(f"Validation accuracy: {valid_cm.accuracy():.3f}")
         print(f"Training time: {time.time() - start_time:.2f} seconds")
+
+plot_accuracy_per_configuration(trained_models, results)
+plot_combined_accuracy(trained_models, results)
 
 print("\nSummary of Results:")
 print("Configuration\tFold\tTrain Acc\tValid Acc\tTime (s)")
@@ -124,11 +172,24 @@ print("-" * 60)
 for result in results:
     print(f"{result['config']}\t{result['fold']+1}\t{result['train_acc']:.3f}\t{result['valid_acc']:.3f}\t{result['time']:.2f}")
 
-# test best configuration on a random image
+config_valid_accs = defaultdict(list)
+for result in results:
+    config_valid_accs[result['config']].append(result['valid_acc'])
+
+print("\nAverage Validation Accuracy by Configuration:")
+best_config = None
+best_avg_acc = -1
+for config, accs in config_valid_accs.items():
+    avg_acc = sum(accs) / len(accs)
+    print(f"{config}: {avg_acc:.4f}")
+    if avg_acc > best_avg_acc:
+        best_avg_acc = avg_acc
+        best_config = config
+print(f"\nBest configuration: {best_config} (Avg. Validation Accuracy: {best_avg_acc:.4f})")
+
 best_config = max(results, key=lambda x: x['valid_acc'])
 print(f"\nTesting best configuration ({best_config['config']}) on a random image:")
 
-# rebuild best model
 best_model = Model()
 for layer, activation in next(c['layers'] for c in configurations if c['name'] == best_config['config']):
     best_model.add(layer)
