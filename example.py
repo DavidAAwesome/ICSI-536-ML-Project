@@ -147,7 +147,7 @@ for config in configurations:
                             epochs=config['epochs'], 
                             learning_rate=config['learning_rate'], 
                             loss_fn=config['loss_fn'], 
-                            passes=5)
+                            passes=2)    # CHANGE FOLDS HERE
     
     for i, (model, train_cm, valid_cm) in enumerate(models):
         results.append({
