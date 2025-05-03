@@ -8,12 +8,13 @@ Output should generate augmented images in the `/data/output` folder (ignore the
 
 ## Run Tests
 
-Tests are intended to be run with the [pytest](https://docs.pytest.org/en/stable/index.html) framework. Ensure that the package is properly installed in your virtual environment, <u>**and that it is activated**</u>.
+Put dataset into '/data/' folder
+Install dependencies (pip install -r requirements.txt)
 
 Then run:
 
 ```
-pytest tests
+python example.py
 ```
 
 from the project root.

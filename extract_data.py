@@ -32,24 +32,46 @@ labels_dir = os.path.join(bone_yolo_dir, 'train', 'labels')
 limit = 1000 # Only scan in `limit` number of images
 X_rows = [] 
 y_rows = []
-for label_entry in os.scandir(labels_dir):
 
+print("Processing images and labels...")
+for label_entry in os.scandir(labels_dir):
     if len(y_rows) >= limit:
         break
-    # Accumate labels in list, to be converted to numpy array later
+    
+    # Get label
     y = extract_class_label_from_file(label_entry.path)
-    if y is None: # Drop non-fractured images
+    if y is None:  # Drop non-fractured images
         continue
     onehot_y = dummy_code(y, NUM_CLASSES)
-    y_rows.append(onehot_y)
 
-    # Do same for images
+    # Get corresponding image
     image_name = label_entry.name.replace('.txt', '.jpg')
     image_path = os.path.join(images_dir, image_name)
-    X_rows.append(process_image(image_path))
+    if not os.path.exists(image_path):
+        print(f"Image not found for {label_entry.name}")
+        continue
+        
+    img_features = process_image(image_path)
+    if img_features is None:
+        print(f"Failed to process image {image_path}")
+        continue
+        
+    X_rows.append(img_features)
+    y_rows.append(onehot_y)
+
+print(f"Processed {len(X_rows)} images")
 
 X_train = np.array(X_rows)
 y_train = np.array(y_rows)
 
-train_data = np.concatenate([X_train, y_train], axis=1)
-np.savetxt("data/BoneFractureYolo8/train_extracted.csv", train_data, delimiter=",", fmt='%.3f')
+print("X_train shape:", X_train.shape)
+print("y_train shape:", y_train.shape)
+
+# Combine features and labels horizontally
+train_data = np.hstack((X_train, y_train))
+print("Combined data shape:", train_data.shape)
+
+# Save to CSV
+output_path = os.path.join(bone_yolo_dir, 'train_extracted.csv')
+np.savetxt(output_path, train_data, delimiter=",", fmt='%.3f')
+print(f"Saved data to {output_path}")
