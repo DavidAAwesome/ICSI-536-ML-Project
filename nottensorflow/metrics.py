@@ -81,5 +81,3 @@ class ConfusionMatrix:
         precision = self.precision(C)
         recall = self.recall(C)
         return 2 * precision * recall / (precision + recall)
-
-

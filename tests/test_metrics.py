@@ -30,3 +30,4 @@ def test_display_matrix_no_colLabel_and_no_rowLabel():
         for j in range(num_classes):
             count = int(ax[i,j].get_text().get_text())
             assert count == cmat.matrix[i,j]
+            

@@ -59,4 +59,4 @@ accuracy = float(con_mat.accuracy())
 print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
 models = Cross_validation.cross_validation(model.layers, x_train, y_train_oh, 10, .1, loss_fn=loss_fn,passes=10)
-print(models) 
+print(models)

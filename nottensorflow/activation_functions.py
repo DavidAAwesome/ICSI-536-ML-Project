@@ -1,4 +1,4 @@
-from Layer import Layer
+from nottensorflow.Layer import Layer
 import numpy as np
 
 # ReLU activation
@@ -35,3 +35,4 @@ class Sigmoid(Layer):
         First derivative of the sigmoid/logistic function
         """
         return output_grad * self.output * (1 - self.output)
+    

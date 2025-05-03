@@ -1,8 +1,6 @@
 import numpy as np
-import Layer
-import loss_functions
-import activation_functions
-import neural_network
+from nottensorflow.Layer import Layer
+
 # Mean Squared Error loss
 class MeanSquaredLoss:
     def forward(self, prediction, target):
@@ -26,4 +24,3 @@ class CrossEntropyLoss:
     def backward(self):
         # Gradient of loss w.r.t. softmax input, assuming softmax was applied before
         return (self.prediction - self.target) / self.target.shape[0]
-
