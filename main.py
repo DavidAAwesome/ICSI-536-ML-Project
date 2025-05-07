@@ -21,6 +21,7 @@ bone_yolo_dir = os.path.join(base_dir, 'data', 'BoneFractureYolo8')
 
 with np.load(os.path.join(bone_yolo_dir, 'train_extracted.npz')) as f:
     train_data = np.concatenate([f['extracted'], f['extracted_augmented']], axis=0)
+    np.random.shuffle(train_data)
 
 # One-hot encode label vector
 def onehot(y, num_classes):
@@ -188,37 +189,23 @@ for result in results:
     config_valid_accs[result['config']].append(result['valid_acc'])
 
 print("\nAverage Validation Accuracy by Configuration:")
-best_config = None
 best_avg_acc = -1
 for config, accs in config_valid_accs.items():
     avg_acc = sum(accs) / len(accs)
     print(f"{config}: {avg_acc:.4f}")
     if avg_acc > best_avg_acc:
         best_avg_acc = avg_acc
-        best_config = config
+        best_config_name = config
 
-# best_config: str
-print(f"\nBest configuration: {best_config} (Avg. Validation Accuracy: {best_avg_acc:.4f})")
+print(f"\nBest configuration: {best_config_name} (Avg. Validation Accuracy: {best_avg_acc:.4f})")
 
 # best_config: dict
 best_config = max(results, key=lambda x: x['valid_acc'])
-print(f"\nTesting best configuration ({best_config['config']}) on a random image:")
+print(f"\nEvaluating best configuration ({best_config['config']}) on Test Set:")
 
-best_model = Model()
-for c in configurations:
-    if c['name'] == best_config['config']:
-        best_config_ = c
-
-for layer, activation in best_config_['layers']:
-    best_model.add(layer)
-    best_model.add(activation)
-
-# train best model on full dataset
-best_model.train_SGD(X_train, y_train, 
-                    epochs=best_config_['epochs'], 
-                    learning_rate=best_config_['learning_rate'], 
-                    loss_fn=best_config_['loss_fn'], 
-                    batch_size=best_config_['batch_size'])
+for i, result in enumerate(results):
+    if result['config'] == best_config_name:
+        best_model = trained_models[i]
 
 # Test set performance
 with np.load(os.path.join(bone_yolo_dir, 'test_extracted.npz')) as file:
@@ -227,4 +214,5 @@ with np.load(os.path.join(bone_yolo_dir, 'test_extracted.npz')) as file:
     y_test = test_data[:, -1]
 
 predictions = np.argmax(best_model.predict(X_test), axis=1)
-print(ConfusionMatrix(true_labels=y_test, pred_labels=predictions, num_classes=NUM_CLASSES).accuracy())
+test_acc = ConfusionMatrix(true_labels=y_test, pred_labels=predictions, num_classes=NUM_CLASSES).accuracy()
+print(f'Test Accuracy: {test_acc:.2%}')

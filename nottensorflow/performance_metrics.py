@@ -65,11 +65,12 @@ class ConfusionMatrix:
         return table
     
     def print_statistics(self):
-        print(f'Accuracy: {self.accuracy():.4f}')
+        print(f'Accuracy: {self.accuracy():.2%}')
         for cls in range(self.num_classes):
-            print(f'Precision ({cls}): {self.precision(cls):.4f}')
-            print(f'Recall ({cls}): {self.precision(cls):.4f}')
-            print(f'F1 Score ({cls}): {self.precision(cls):.4f}')
+            print(f'\n===Class {cls}===')
+            print(f'Precision: {self.precision(cls):.2%}')
+            print(f'Recall: {self.recall(cls):.2%}')
+            print(f'F1 Score: {self.f1_score(cls):.2%}')
 
     def accuracy(self):
         correct = np.trace(self.matrix)
@@ -78,7 +79,7 @@ class ConfusionMatrix:
     
     def precision(self, C: int):
         """
-        Precision = TP / (TP + FP) = True_Positive / All_Positive_Predictions
+        Precision = TP / (TP + FP) = True_Positive / Total_Positive_Predictions
 
         Treats class `C` as the 'positive' class, and all other classes as 'negative'.
         """
@@ -88,13 +89,13 @@ class ConfusionMatrix:
     
     def recall(self, C):
         """
-        Recall = TP / (TP + FN) = True_Positive / All_Real_Positives
+        Recall = TP / (TP + FN) = True_Positive / Total_True_Positives
 
         Treats class `c` as the 'positive' class, and all other classes as 'negative'.
         """
-        total_pos_real = np.sum(self.matrix[C, :])
+        total_true_pos = np.sum(self.matrix[C, :])
         true_pos = self.matrix[C, C]
-        return true_pos / total_pos_real
+        return true_pos / total_true_pos
 
     def f1_score(self, C):
         """
