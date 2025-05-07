@@ -1,7 +1,4 @@
 import numpy as np
-from nottensorflow.Layer import Layer
-from nottensorflow import loss_functions
-from nottensorflow import activation_functions
 
 # Model class
 class Model:
@@ -86,26 +83,3 @@ class Model:
 
             if (epoch + 1) % 100 == 0 or epoch == 0:
                 print(f"Epoch {epoch + 1}, Loss: {loss:.6f}")
-
-# Example usage
-if __name__ == "__main__":
-    # Dummy data: learn identity function
-    X = np.random.rand(1000, 2)
-    y = X.copy()
-
-    model = Model()
-    ((model.add(Layer.Dense(2, 3))
-     .add(activation_functions.ReLU())
-     .add(Layer.Dense(3, 2)))
-     )
-
-    loss_fn = loss_functions.MSELoss()
-
-    model.train(X, y, epochs=10000, learning_rate=0.1, loss_fn=loss_fn)
-
-    # Predict
-    pred = model.predict(X[:5])
-    print("\nPredictions:")
-    print(pred)
-    print("Targets:")
-    print(y[:5])

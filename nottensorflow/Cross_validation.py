@@ -1,6 +1,6 @@
 import numpy as np
 from nottensorflow import neural_net
-from nottensorflow import preformance_metrics
+from nottensorflow import performance_metrics
 
 def count_classes(labels):
     return labels.shape[1]
@@ -33,12 +33,11 @@ def cross_validation(model, x, y, epochs, learning_rate, loss_fn, passes):
         y_train_indices = np.argmax(y_train, axis=1)
         y_train_pred_indices = np.argmax(y_train_pred, axis=1)
 
-        confusionMatrix_valid = preformance_metrics.ConfusionMatrix(true_labels=y_test_indices, 
+        confusionMatrix_valid = performance_metrics.ConfusionMatrix(true_labels=y_test_indices, 
                                                                   pred_labels=y_valid_pred_indices,
                                                                   num_classes=count_classes(y))
-        confusionMatrix_train = preformance_metrics.ConfusionMatrix(true_labels=y_train_indices, 
+        confusionMatrix_train = performance_metrics.ConfusionMatrix(true_labels=y_train_indices, 
                                                                   pred_labels=y_train_pred_indices,
                                                                   num_classes=count_classes(y))
         models.append([fold_model, confusionMatrix_train, confusionMatrix_valid])
-        print('Confusion Matrix Test acc', confusionMatrix_valid.accuracy())
     return models

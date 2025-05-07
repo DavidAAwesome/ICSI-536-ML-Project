@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from nottensorflow.neural_net import Layer
+from nottensorflow.Layer import Layer
 
 class Softmax(Layer):
   

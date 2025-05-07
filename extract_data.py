@@ -1,13 +1,11 @@
-import numpy as np
 import os
-from nottensorflow.image_processing import process_image
-
-NUM_CLASSES = 7
+import numpy as np
+from nottensorflow.image_processing import process_image, augment_and_save
 
 ## Helper functions
 def extract_class_label_from_file(file_path: str):
     """
-    Extracts class ID (first number) from YOLO dataset label. Returns as
+    Extracts class ID (first number) from dataset label. Returns as
     numpy array.
     """
     with open(file_path, 'r') as file:
@@ -18,60 +16,87 @@ def extract_class_label_from_file(file_path: str):
     class_id = int(nums[0])
     return class_id
 
-def dummy_code(y: int, num_classes: int):
-    onehot_y = np.zeros(num_classes)
-    onehot_y[y] = 1
-    return onehot_y
+def extract(labels_dir, images_dir, limit=-1):
+    """
+    Extract images and label classes into NumPy array
 
-## Load images & labels as numpy arrays
-base_dir = os.path.dirname(__file__)
-bone_yolo_dir = os.path.join(base_dir, 'data', 'BoneFractureYolo8')
-images_dir = os.path.join(bone_yolo_dir, 'train', 'images')
-labels_dir = os.path.join(bone_yolo_dir, 'train', 'labels')
-
-limit = 1000 # Only scan in `limit` number of images
-X_rows = [] 
-y_rows = []
-
-print("Processing images and labels...")
-for label_entry in os.scandir(labels_dir):
-    if len(y_rows) >= limit:
-        break
+    Args:
+        `labels_dir`: Path to labels
+        `images_dir`: Path to images
+        `limit`: Number of images to scan in. Pass negative limit to scan all
+    """
+    X_aug_rows = []
+    X_rows = []
+    y_rows = []
+    num_imgs = 0
+    num_blank = 0
     
-    # Get label
-    y = extract_class_label_from_file(label_entry.path)
-    if y is None:  # Drop non-fractured images
-        continue
-    onehot_y = dummy_code(y, NUM_CLASSES)
-
-    # Get corresponding image
-    image_name = label_entry.name.replace('.txt', '.jpg')
-    image_path = os.path.join(images_dir, image_name)
-    if not os.path.exists(image_path):
-        print(f"Image not found for {label_entry.name}")
-        continue
+    for label_entry in os.scandir(labels_dir):
+        # Scan in `limit` images only
+        if limit >= 0 and num_imgs >= limit: 
+            break
+    
+        # Accumate labels in list, to be converted to numpy array later
+        y = extract_class_label_from_file(label_entry.path)
+        if y is None: # Drop non-fractured images
+            num_blank += 1
+            continue
+            
+        y_rows += [y]
+    
+        # Do same for images
+        image_name = label_entry.name.replace('.txt', '.jpg')
+        image_path = os.path.join(images_dir, image_name)
+        img = process_image(image_path)
+        X_rows += [img.flatten()]
+        # Augment images
+        aug_img, _ = augment_and_save(img, output_dir='', base_name='', save=False) # Only augment, no save
+        X_aug_rows += [aug_img.ravel()]
         
-    img_features = process_image(image_path)
-    if img_features is None:
-        print(f"Failed to process image {image_path}")
-        continue
-        
-    X_rows.append(img_features)
-    y_rows.append(onehot_y)
+        # Log progress
+        num_imgs += 1
+        if num_imgs % 200 == 0:
+            print(f'Extracted: {num_imgs}')
+    
+    # Normal images
+    X = np.array(X_rows)
+    y = np.array(y_rows).reshape(-1,1)
+    data = np.concatenate([X, y], axis=1)
+    # Augmented images
+    X_aug = np.array(X_aug_rows)
+    data_augmented = np.concatenate([X_aug, y], axis=1)
 
-print(f"Processed {len(X_rows)} images")
+    print(f'Extracted: {num_imgs}')
+    print(f'Blank Lables: {num_blank}')
+    return data, data_augmented
 
-X_train = np.array(X_rows)
-y_train = np.array(y_rows)
+def extract_and_save(dataset_dir, base_dir, out_name):
+    # Get all relevant directories
+    train_images_dir = os.path.join(dataset_dir, 'train', 'images')
+    train_labels_dir = os.path.join(dataset_dir, 'train', 'labels')
+    
+    valid_images_dir = os.path.join(dataset_dir, 'valid', 'images')
+    valid_labels_dir = os.path.join(dataset_dir, 'valid', 'labels')
+    
+    test_images_dir = os.path.join(dataset_dir, 'test', 'images')
+    test_labels_dir = os.path.join(dataset_dir, 'test', 'labels')
+    
+    # Extract & augmented images
+    train, train_aug = extract(train_labels_dir, train_images_dir,) 
+    valid, valid_aug = extract(valid_labels_dir, valid_images_dir,)
+    test, _ = extract(test_labels_dir, test_images_dir,)
+    
+    # Combine train and valid sets together
+    train = np.concatenate([train, valid], axis=0)
+    train_aug = np.concatenate([train_aug, valid_aug], axis=0)
 
-print("X_train shape:", X_train.shape)
-print("y_train shape:", y_train.shape)
+    np.savez_compressed(os.path.join(base_dir, f'{out_name}_train_extracted'), extracted=train, extracted_augmented=train_aug)
+    np.savez_compressed(os.path.join(base_dir, f'{out_name}_test_extracted'), extracted=test)
 
-# Combine features and labels horizontally
-train_data = np.hstack((X_train, y_train))
-print("Combined data shape:", train_data.shape)
+# Dataset directory was orginally on Kaggle
+v8_dir = '/kaggle/input/bone-fracture-detection-computer-vision-project/BoneFractureYolo8'
+v4_dir = '/kaggle/input/bone-fracture-detection-computer-vision-project/bone fracture detection.v4-v4.yolov8'
 
-# Save to CSV
-output_path = os.path.join(bone_yolo_dir, 'train_extracted.csv')
-np.savetxt(output_path, train_data, delimiter=",", fmt='%.3f')
-print(f"Saved data to {output_path}")
+base_dir = os.path.dirname(__file__) # Originally /kaggle/working
+extract_and_save(v8_dir, base_dir, 'v8')
+extract_and_save(v4_dir, base_dir, 'v4')

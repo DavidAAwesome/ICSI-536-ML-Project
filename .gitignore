@@ -5,6 +5,7 @@
 
 # Datasets
 *.csv
+*.npz
 
 # User-specific files
 *.rsuser
