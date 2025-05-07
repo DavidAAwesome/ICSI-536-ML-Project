@@ -17,9 +17,9 @@ NUM_CLASSES = 7
 
 ## Read in data from CSV (*.npz)
 base_dir = os.path.dirname(__file__)
-bone_yolo_dir = os.path.join(base_dir, 'data', 'BoneFractureYolo8')
+bone_yolo_dir = os.path.join(base_dir, 'data')
 
-with np.load(os.path.join(bone_yolo_dir, 'train_extracted.npz')) as f:
+with np.load(os.path.join(bone_yolo_dir, 'v8_train_extracted.npz')) as f:
     train_data = np.concatenate([f['extracted'], f['extracted_augmented']], axis=0)
     np.random.shuffle(train_data)
 
@@ -208,11 +208,11 @@ for i, result in enumerate(results):
         best_model = trained_models[i]
 
 # Test set performance
-with np.load(os.path.join(bone_yolo_dir, 'test_extracted.npz')) as file:
+with np.load(os.path.join(bone_yolo_dir, 'v8_test_extracted.npz')) as file:
     test_data = file['extracted']
     X_test = test_data[:, :-1]
     y_test = test_data[:, -1]
 
 predictions = np.argmax(best_model.predict(X_test), axis=1)
 test_acc = ConfusionMatrix(true_labels=y_test, pred_labels=predictions, num_classes=NUM_CLASSES).accuracy()
-print(f'Test Accuracy: {test_acc:.2%}')
+print(f'**Test Accuracy: {test_acc:.2%}**')

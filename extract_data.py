@@ -70,7 +70,7 @@ def extract(labels_dir, images_dir, limit=-1):
     print(f'Blank Lables: {num_blank}')
     return data, data_augmented
 
-def extract_and_save(dataset_dir, base_dir, out_name):
+def extract_and_save(dataset_dir, base_dir):
     # Get all relevant directories
     train_images_dir = os.path.join(dataset_dir, 'train', 'images')
     train_labels_dir = os.path.join(dataset_dir, 'train', 'labels')
@@ -90,13 +90,10 @@ def extract_and_save(dataset_dir, base_dir, out_name):
     train = np.concatenate([train, valid], axis=0)
     train_aug = np.concatenate([train_aug, valid_aug], axis=0)
 
-    np.savez_compressed(os.path.join(base_dir, f'{out_name}_train_extracted'), extracted=train, extracted_augmented=train_aug)
-    np.savez_compressed(os.path.join(base_dir, f'{out_name}_test_extracted'), extracted=test)
+    np.savez_compressed(os.path.join(base_dir, 'train_extracted'), extracted=train, extracted_augmented=train_aug)
+    np.savez_compressed(os.path.join(base_dir, 'test_extracted'), extracted=test)
 
-# Dataset directory was orginally on Kaggle
-v8_dir = '/kaggle/input/bone-fracture-detection-computer-vision-project/BoneFractureYolo8'
-v4_dir = '/kaggle/input/bone-fracture-detection-computer-vision-project/bone fracture detection.v4-v4.yolov8'
+v8_dir = 'data/BoneFractureYolo8'
+base_dir = os.path.dirname(__file__)
 
-base_dir = os.path.dirname(__file__) # Originally /kaggle/working
-extract_and_save(v8_dir, base_dir, 'v8')
-extract_and_save(v4_dir, base_dir, 'v4')
+extract_and_save(v8_dir, base_dir)
